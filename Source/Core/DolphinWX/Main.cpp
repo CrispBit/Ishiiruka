@@ -371,7 +371,7 @@ void DolphinApp::InitLanguageSupport()
 			StrToWxStr(File::GetBundleDirectory() + "Contents/Resources"));
 #endif
 
-		m_locale->AddCatalog("dolphin-emu");
+		m_locale->AddCatalog("ishiiruka");
 
 		if (!m_locale->IsOk())
 		{

@@ -2,7 +2,7 @@
 # General setup
 #
 cmake_minimum_required(VERSION 2.8.8)
-project(dolphin-emu)
+project(ishiiruka)
 
 option(USE_EGL "Enables EGL OpenGL Interface" OFF)
 option(TRY_X11 "Enables X11 Support" ON)
@@ -94,7 +94,7 @@ if(APPLE)
 	set(CMAKE_INSTALL_PREFIX ${CMAKE_BINARY_DIR}/install-dummy)
 else()
 	set(bindir  ${CMAKE_INSTALL_PREFIX}/bin               CACHE PATH "bindir")
-	set(datadir ${CMAKE_INSTALL_PREFIX}/share/dolphin-emu CACHE PATH "datadir")
+	set(datadir ${CMAKE_INSTALL_PREFIX}/share/ishiiruka CACHE PATH "datadir")
 	set(mandir  ${CMAKE_INSTALL_PREFIX}/share/man         CACHE PATH "mandir")
 	add_definitions(-DDATA_DIR="${datadir}/")
 endif()
@@ -1064,21 +1064,21 @@ if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Linux|FreeBSD|OpenBSD|Darwin")
 endif()
 if(${CMAKE_SYSTEM_NAME} MATCHES "Linux|FreeBSD|OpenBSD")
 	# Install the application icon and menu item
-	install(FILES Data/dolphin-emu.svg
+	install(FILES Data/ishiiruka.svg
 		DESTINATION ${CMAKE_INSTALL_PREFIX}/share/icons/hicolor/scalable/apps)
-	install(FILES Data/dolphin-emu.png
+	install(FILES Data/ishiiruka.png
 		DESTINATION ${CMAKE_INSTALL_PREFIX}/share/icons/hicolor/48x48/apps)
-	install(FILES Data/dolphin-emu.desktop
+	install(FILES Data/ishiiruka.desktop
 		DESTINATION ${CMAKE_INSTALL_PREFIX}/share/applications)
 	# Install manpages
-	install(FILES Data/dolphin-emu.6
+	install(FILES Data/ishiiruka.6
 		DESTINATION ${mandir}/man6)
-	install(FILES Data/dolphin-emu-nogui.6
+	install(FILES Data/ishiiruka-nogui.6
 		DESTINATION ${mandir}/man6)
 endif()
 
 # packaging information
-set(CPACK_PACKAGE_NAME "dolphin-emu")
+set(CPACK_PACKAGE_NAME "ishiiruka")
 set(CPACK_PACKAGE_VENDOR "Dolphin Team")
 set(CPACK_PACKAGE_VERSION_MAJOR ${DOLPHIN_VERSION_MAJOR})
 set(CPACK_PACKAGE_VERSION_MINOR ${DOLPHIN_VERSION_MINOR})
