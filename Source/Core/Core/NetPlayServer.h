@@ -36,6 +36,8 @@ public:
 	~NetPlayServer();
 
 	bool ChangeGame(const std::string& game);
+	bool TestPing(const std::string& target_identifier);
+	bool AbortPing();
 	bool ComputeMD5(const std::string& file_identifier);
 	bool AbortMD5();
 	void SendChatMessage(const std::string& msg);

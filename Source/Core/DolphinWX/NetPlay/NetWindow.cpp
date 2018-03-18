@@ -48,6 +48,7 @@
 #include "DolphinWX/NetPlay/NetWindow.h"
 #include "DolphinWX/NetPlay/PadMapDialog.h"
 #include "DolphinWX/WxUtils.h"
+#include "PingDialog.h"
 #include "MD5Dialog.h"
 
 #include "VideoCommon/OnScreenDisplay.h"
@@ -136,7 +137,14 @@ wxSizer* NetPlayDialog::CreateTopGUI(wxWindow* parent)
 		m_MD5_choice->Append(_("SD card"));
 		m_MD5_choice->SetSelection(0);
 
+		m_ping_choice = new wxChoice(parent, wxID_ANY, wxDefaultPosition, FromDIP(wxSize(150, -1)));
+		m_ping_choice->Bind(wxEVT_CHOICE, &NetPlayDialog::OnPingCheckRequested, this);
+		m_ping_choice->Append(_("Ping check..."));
+		m_ping_choice->Append(_("https://google.com"));
+		m_ping_choice->SetSelection(0);
+
 		top_szr->Add(m_MD5_choice, 0, wxALIGN_CENTER_VERTICAL);
+		top_szr->Add(m_ping_choice, 0, wxALIGN_CENTER_VERTICAL);
 	}
 
 	return top_szr;
@@ -586,6 +594,22 @@ void NetPlayDialog::OnThread(wxThreadEvent& event)
 		AddChatMessage(ChatMessageType::Info, msg);
 	}
 	break;
+	case NP_GUI_EVT_DISPLAY_PING_DIALOG:
+	{
+		m_ping_dialog = new PingDialog(this, netplay_server, netplay_client->GetPlayers(),
+			event.GetString().ToStdString());
+		m_ping_dialog->Show();
+	}
+	break;
+	case NP_GUI_EVT_APPEND_PING_RESULT:
+	{
+		if (m_ping_dialog == nullptr || m_ping_dialog->IsBeingDeleted())
+			break;
+
+		std::pair<int, sf::Uint16> payload = event.GetPayload<std::pair<int, sf::Uint16>>();
+		m_ping_dialog->SetPing(payload.first, payload.second);
+	}
+	break;
 	case NP_GUI_EVT_DISPLAY_MD5_DIALOG:
 	{
 		m_MD5_dialog = new MD5Dialog(this, netplay_server, netplay_client->GetPlayers(),
@@ -686,6 +710,25 @@ void NetPlayDialog::OnChangeGame(wxCommandEvent&)
 	m_game_btn->SetLabel(game_name.Prepend(_(" Game : ")));
 }
 
+void NetPlayDialog::OnPingCheckRequested(wxCommandEvent&)
+{
+	PingTarget selection = static_cast<PingTarget>(m_ping_choice->GetSelection());
+	std::string target_identifier;
+
+	m_ping_choice->SetSelection(0);
+
+	switch (selection)
+	{
+	case PingTarget::Google:
+		target_identifier = "https://google.com";
+		break;
+	default:
+		return;
+	}
+
+	netplay_server->TestPing(target_identifier);
+}
+
 void NetPlayDialog::OnMD5ComputeRequested(wxCommandEvent&)
 {
 	MD5Target selection = static_cast<MD5Target>(m_MD5_choice->GetSelection());
@@ -717,6 +760,26 @@ void NetPlayDialog::OnMD5ComputeRequested(wxCommandEvent&)
 	}
 
 	netplay_server->ComputeMD5(file_identifier);
+}
+
+void NetPlayDialog::ShowPingDialog(const std::string& target_identifier)
+{
+	wxThreadEvent evt(wxEVT_THREAD, NP_GUI_EVT_DISPLAY_PING_DIALOG);
+	evt.SetString(target_identifier);
+	GetEventHandler()->AddPendingEvent(evt);
+}
+
+void NetPlayDialog::SetPing(int pid, sf::Uint16 milliseconds)
+{
+	wxThreadEvent evt(wxEVT_THREAD, NP_GUI_EVT_APPEND_PING_RESULT);
+	evt.SetPayload(std::pair<int, sf::Uint16>(pid, milliseconds));
+	GetEventHandler()->AddPendingEvent(evt);
+}
+
+void NetPlayDialog::AbortPing()
+{
+	if (m_ping_dialog != nullptr && !m_ping_dialog->IsBeingDeleted())
+		m_ping_dialog->Destroy();
 }
 
 void NetPlayDialog::ShowMD5Dialog(const std::string& file_identifier)

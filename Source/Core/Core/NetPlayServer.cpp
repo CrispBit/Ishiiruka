@@ -561,6 +561,20 @@ unsigned int NetPlayServer::OnData(sf::Packet& packet, Client& player)
 	}
 	break;
 
+	case NP_MSG_APPEND_PING_DATA:
+	{
+		sf::Uint16 milliseconds;
+		packet >> milliseconds;
+
+		sf::Packet spac;
+		spac << static_cast<MessageId>(NP_MSG_APPEND_PING_DATA);
+		spac << player.pid;
+		spac << milliseconds;
+
+		SendToClients(spac);
+	}
+	break;
+
 	case NP_MSG_PAD_BUFFER_PLAYER:
 	{
 		u32 buffer;
@@ -821,6 +835,29 @@ bool NetPlayServer::ChangeGame(const std::string& game)
 	auto spac = std::make_unique<sf::Packet>();
 	*spac << static_cast<MessageId>(NP_MSG_CHANGE_GAME);
 	*spac << game;
+
+	SendAsyncToClients(std::move(spac));
+
+	return true;
+}
+
+// called from ---GUI--- thread
+bool NetPlayServer::TestPing(const std::string& target_identifier)
+{
+	auto spac = std::make_unique<sf::Packet>();
+	*spac << static_cast<MessageId>(NP_MSG_TEST_PING);
+	*spac << target_identifier;
+
+	SendAsyncToClients(std::move(spac));
+
+	return true;
+}
+
+// called from ---GUI--- thread
+bool NetPlayServer::AbortPing()
+{
+	auto spac = std::make_unique<sf::Packet>();
+	*spac << static_cast<MessageId>(NP_MSG_PING_ABORT);
 
 	SendAsyncToClients(std::move(spac));
 

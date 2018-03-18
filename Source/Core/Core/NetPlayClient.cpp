@@ -4,6 +4,7 @@
 
 #include "Core/NetPlayClient.h"
 #include <algorithm>
+#include <curl/curl.h>
 #include <fstream>
 #include <mbedtls/md5.h>
 #include <memory>
@@ -308,6 +309,33 @@ unsigned int NetPlayClient::OnData(sf::Packet& packet)
 		ss << player.name << ": " << msg;
 
 		dialog->AppendChat(ss.str(), false);
+	}
+	break;
+
+	case NP_MSG_TEST_PING:
+	{
+		std::string target_identifier;
+		packet >> target_identifier;
+
+		TestPing(target_identifier);
+	}
+	break;
+
+	case NP_MSG_APPEND_PING_DATA:
+	{
+		PlayerId pid;
+		sf::Uint16 milliseconds;
+		packet >> pid;
+		packet >> milliseconds;
+
+		dialog->SetPing(pid, milliseconds);
+	}
+	break;
+
+	case NP_MSG_PING_ABORT:
+	{
+		m_should_test_ping = false;
+		dialog->AbortPing();
 	}
 	break;
 
@@ -1337,6 +1365,44 @@ bool NetPlayClient::DoAllPlayersHaveGame()
 
 	return std::all_of(std::begin(m_players), std::end(m_players),
 		[](auto entry) { return entry.second.game_status == PlayerGameStatus::Ok; });
+}
+
+void NetPlayClient::TestPing(const std::string& target_identifier)
+{
+	if (m_should_test_ping)
+		return;
+
+	dialog->ShowPingDialog(target_identifier);
+	m_should_test_ping = true;
+
+	m_test_ping_thread = std::thread([this, target_identifier]() {
+		unsigned int tests = 5;
+		curl_global_init(CURL_GLOBAL_ALL);
+		CURL *curl = curl_easy_init();
+		sf::Uint16 sum = 0;
+		while (dialog != nullptr) {
+			for (unsigned int i = 0; i < tests; i++) {
+				curl_easy_setopt(curl, CURLOPT_URL, target_identifier.c_str());
+				curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 3);
+				curl_easy_setopt(curl, CURLOPT_NOBODY, 1);
+				CURLcode res = curl_easy_perform(curl);
+
+				double millisecondsD;
+				curl_easy_getinfo(curl, CURLINFO_TOTAL_TIME, &millisecondsD);
+				OutputDebugStringA(std::to_string(millisecondsD).c_str());
+				sf::Uint16 milliseconds = (sf::Uint16) (millisecondsD * 1000);
+
+				sum += milliseconds;
+			}
+			sf::Packet spac;
+			spac << static_cast<MessageId>(NP_MSG_APPEND_PING_DATA);
+			spac << static_cast<sf::Uint16>(sum / tests);
+			Send(spac);
+		}
+		curl_easy_cleanup(curl);
+		curl_global_cleanup();
+	});
+	m_test_ping_thread.detach();
 }
 
 void NetPlayClient::ComputeMD5(const std::string& file_identifier)

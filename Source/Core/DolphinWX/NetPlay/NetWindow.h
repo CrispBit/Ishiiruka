@@ -14,6 +14,7 @@
 #include "Core/NetPlayServer.h"
 
 class CGameListCtrl;
+class PingDialog;
 class MD5Dialog;
 class wxButton;
 class wxCheckBox;
@@ -30,6 +31,8 @@ enum
 	NP_GUI_EVT_CHANGE_GAME = 45,
 	NP_GUI_EVT_START_GAME,
 	NP_GUI_EVT_STOP_GAME,
+	NP_GUI_EVT_DISPLAY_PING_DIALOG,
+	NP_GUI_EVT_APPEND_PING_RESULT,
 	NP_GUI_EVT_DISPLAY_MD5_DIALOG,
 	NP_GUI_EVT_MD5_PROGRESS,
 	NP_GUI_EVT_MD5_RESULT,
@@ -55,6 +58,12 @@ enum class ChatMessageType
 	UserIn,
 	// Outcoming user chat messages
 	UserOut,
+};
+
+// IDs are UI-dependent here
+enum class PingTarget
+{
+	Google = 1
 };
 
 // IDs are UI-dependent here
@@ -89,6 +98,10 @@ public:
 	void Update() override;
 	void AppendChat(const std::string& msg, bool from_self) override;
 
+	void ShowPingDialog(const std::string& test_identifier) override;
+	void SetPing(int pid, sf::Uint16 milliseconds) override;
+	void AbortPing() override;
+
 	void ShowMD5Dialog(const std::string& file_identifier) override;
 	void SetMD5Progress(int pid, int progress) override;
 	void SetMD5Result(int pid, const std::string& result) override;
@@ -122,6 +135,7 @@ private:
 	void OnQuit(wxCommandEvent& event);
 	void OnThread(wxThreadEvent& event);
 	void OnChangeGame(wxCommandEvent& event);
+	void OnPingCheckRequested(wxCommandEvent& event);
 	void OnMD5ComputeRequested(wxCommandEvent& event);
 	void OnAdjustMinimumBuffer(wxCommandEvent& event);
 	void OnAdjustPlayerBuffer(wxCommandEvent& event);
@@ -153,6 +167,8 @@ private:
 	wxStaticText* m_host_label;
 	wxChoice* m_host_type_choice;
 	wxButton* m_host_copy_btn;
+	wxChoice* m_ping_choice = nullptr;
+	PingDialog* m_ping_dialog = nullptr;
 	wxChoice* m_MD5_choice = nullptr;
 	MD5Dialog* m_MD5_dialog = nullptr;
 	bool m_host_copy_btn_is_retry;

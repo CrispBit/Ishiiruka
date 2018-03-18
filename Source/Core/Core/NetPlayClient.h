@@ -43,6 +43,9 @@ public:
 	virtual void OnTraversalError(int error) = 0;
 	virtual bool IsRecording() = 0;
 	virtual std::string FindGame(const std::string& game) = 0;
+	virtual void ShowPingDialog(const std::string& target_identifier) = 0;
+	virtual void SetPing(int pid, sf::Uint16 milliseconds) = 0;
+	virtual void AbortPing() = 0;
 	virtual void ShowMD5Dialog(const std::string& file_identifier) = 0;
 	virtual void SetMD5Progress(int pid, int progress) = 0;
 	virtual void SetMD5Result(int pid, const std::string& result) = 0;
@@ -178,6 +181,7 @@ private:
 	void Send(sf::Packet& packet);
 	void Disconnect();
 	bool Connect();
+	void TestPing(const std::string& target_identifier);
 	void ComputeMD5(const std::string& file_identifier);
 	void DisplayPlayersPing();
 	u32 GetPlayersMaxPing() const;
@@ -192,6 +196,8 @@ private:
 	std::string m_player_name;
 	bool m_connecting = false;
 	TraversalClient* m_traversal_client = nullptr;
+	std::thread m_test_ping_thread;
+	bool m_should_test_ping = false;
 	std::thread m_MD5_thread;
 	bool m_should_compute_MD5 = false;
 	Common::Event m_gc_pad_event;
