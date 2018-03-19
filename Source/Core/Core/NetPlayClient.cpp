@@ -1388,7 +1388,7 @@ void NetPlayClient::TestPing(const std::string& target_identifier)
 				CURLcode res = curl_easy_perform(curl);
 
 				double millisecondsD;
-				curl_easy_getinfo(curl, CURLINFO_TOTAL_TIME, &millisecondsD);
+				curl_easy_getinfo(curl, CURLINFO_STARTTRANSFER_TIME, &millisecondsD);
 				OutputDebugStringA(std::to_string(millisecondsD).c_str());
 				sf::Uint16 milliseconds = (sf::Uint16) (millisecondsD * 1000);
 
