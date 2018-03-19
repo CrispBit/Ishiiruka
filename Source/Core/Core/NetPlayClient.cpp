@@ -1379,8 +1379,8 @@ void NetPlayClient::TestPing(const std::string& target_identifier)
 		unsigned int tests = 5;
 		curl_global_init(CURL_GLOBAL_ALL);
 		CURL *curl = curl_easy_init();
-		sf::Uint16 sum = 0;
 		while (dialog != nullptr) {
+			sf::Uint16 sum = 0;
 			for (unsigned int i = 0; i < tests; i++) {
 				curl_easy_setopt(curl, CURLOPT_URL, target_identifier.c_str());
 				curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 3);
